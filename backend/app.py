@@ -422,7 +422,7 @@ def clear_history():
 @app.get("/api/incidents")
 @login_required
 def incidents():
-    con=get_db(); rows=con.execute("SELECT id,url,risk,confidence,model,created_at FROM scans WHERE verdict='PHISHING' ORDER BY id DESC LIMIT 100").fetchall(); con.close(); out=[]
+    con=get_db(); rows=con.execute("SELECT id,url,verdict,risk,confidence,model,created_at FROM scans WHERE verdict='PHISHING' ORDER BY id DESC LIMIT 100").fetchall(); con.close(); out=[]
     for r in rows:
         d=dict(r); d["severity"]="CRITICAL" if d["risk"]>=85 else "HIGH" if d["risk"]>=65 else "MEDIUM"; d["status"]="Active"; out.append(d)
     return jsonify({"incidents":out})
