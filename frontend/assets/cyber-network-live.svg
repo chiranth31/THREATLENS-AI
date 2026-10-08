@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#04152f"/>
+      <stop offset="0.55" stop-color="#092b55"/>
+      <stop offset="1" stop-color="#0b3d70"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="75%" cy="40%" r="55%">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity=".25"/>
+      <stop offset=".55" stop-color="#1d4ed8" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#00112b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="18"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="4"/></filter>
+    <pattern id="grid" width="70" height="70" patternUnits="userSpaceOnUse">
+      <path d="M70 0H0V70" fill="none" stroke="#7db5ff" stroke-opacity=".07" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="1100" fill="url(#bg)"/>
+  <rect width="1600" height="1100" fill="url(#glow)"/>
+  <rect width="1600" height="1100" fill="url(#grid)"/>
+
+  <!-- soft animated data field -->
+  <g opacity=".55" filter="url(#blur)">
+    <circle cx="1240" cy="270" r="100" fill="#2563eb">
+      <animate attributeName="cx" values="1240;1320;1240" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="270;350;270" dur="11s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1040" cy="760" r="75" fill="#38bdf8">
+      <animate attributeName="cx" values="1040;950;1040" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="760;690;760" dur="10s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- network lines -->
+  <g fill="none" stroke="#79b4ff" stroke-opacity=".28" stroke-width="1.5">
+    <path d="M920 220 L1100 160 L1260 280 L1410 190 L1510 340"/>
+    <path d="M830 420 L1010 500 L1180 390 L1360 500 L1540 440"/>
+    <path d="M900 690 L1040 760 L1210 650 L1390 760 L1530 650"/>
+    <path d="M760 860 L940 790 L1100 900 L1280 820 L1480 930"/>
+    <path d="M1100 160 L1010 500 L1040 760 L940 790"/>
+    <path d="M1260 280 L1180 390 L1210 650 L1280 820"/>
+    <path d="M1410 190 L1360 500 L1390 760 L1480 930"/>
+  </g>
+  <g fill="#8cc4ff">
+    <circle cx="920" cy="220" r="4"><animate attributeName="r" values="3;7;3" dur="2.8s" repeatCount="indefinite"/></circle>
+    <circle cx="1100" cy="160" r="4"><animate attributeName="r" values="3;6;3" dur="3.6s" repeatCount="indefinite"/></circle>
+    <circle cx="1260" cy="280" r="5"><animate attributeName="r" values="4;8;4" dur="2.5s" repeatCount="indefinite"/></circle>
+    <circle cx="1410" cy="190" r="4"><animate attributeName="r" values="3;7;3" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle cx="1010" cy="500" r="4"><animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="1180" cy="390" r="5"><animate attributeName="r" values="4;8;4" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="1360" cy="500" r="4"><animate attributeName="r" values="3;7;3" dur="2.7s" repeatCount="indefinite"/></circle>
+    <circle cx="1040" cy="760" r="5"><animate attributeName="r" values="4;9;4" dur="3.4s" repeatCount="indefinite"/></circle>
+    <circle cx="1210" cy="650" r="4"><animate attributeName="r" values="3;7;3" dur="2.9s" repeatCount="indefinite"/></circle>
+    <circle cx="1390" cy="760" r="5"><animate attributeName="r" values="4;8;4" dur="3.1s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <!-- flowing scan beam -->
+  <path d="M-100 900 C420 650 780 1050 1700 520" fill="none" stroke="#63a9ff" stroke-opacity=".18" stroke-width="3">
+    <animate attributeName="stroke-opacity" values=".05;.32;.05" dur="5s" repeatCount="indefinite"/>
+  </path>
+  <rect x="-350" y="0" width="240" height="1100" fill="#65aafc" opacity=".045" transform="skewX(-14)">
+    <animate attributeName="x" values="-500;1800" dur="8s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- subtle radial security rings -->
+  <g fill="none" stroke="#9bc7ff" stroke-opacity=".12">
+    <circle cx="1270" cy="540" r="250"><animate attributeName="r" values="230;290;230" dur="8s" repeatCount="indefinite"/></circle>
+    <circle cx="1270" cy="540" r="360"><animate attributeName="r" values="350;410;350" dur="10s" repeatCount="indefinite"/></circle>
+    <circle cx="1270" cy="540" r="480"><animate attributeName="r" values="470;530;470" dur="12s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>

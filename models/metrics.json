@@ -1,0 +1,80 @@
+{
+  "trained": true,
+  "dataset": {
+    "name": "UCI PhiUSIIL Phishing URL (Website)",
+    "uci_id": 967,
+    "instances": 235795,
+    "legitimate": 134850,
+    "phishing": 100945,
+    "original_features": 54,
+    "live_features": [
+      "url_length",
+      "dot_count",
+      "has_at",
+      "https",
+      "ip_address",
+      "suspicious_keywords",
+      "shortener",
+      "hyphens",
+      "subdomain_depth",
+      "double_slash",
+      "query_length",
+      "digit_count"
+    ],
+    "split": "80/20 stratified, random_state=42"
+  },
+  "best_model": "Random Forest",
+  "models": {
+    "Logistic Regression": {
+      "accuracy": 94.52,
+      "precision": 97.29,
+      "recall": 89.71,
+      "f1": 93.35,
+      "confusion_matrix": [
+        [
+          26465,
+          505
+        ],
+        [
+          2077,
+          18112
+        ]
+      ],
+      "training_seconds": 2.59
+    },
+    "Decision Tree": {
+      "accuracy": 96.26,
+      "precision": 97.91,
+      "recall": 93.24,
+      "f1": 95.52,
+      "confusion_matrix": [
+        [
+          26568,
+          402
+        ],
+        [
+          1364,
+          18825
+        ]
+      ],
+      "training_seconds": 0.18
+    },
+    "Random Forest": {
+      "accuracy": 96.28,
+      "precision": 97.56,
+      "recall": 93.64,
+      "f1": 95.56,
+      "confusion_matrix": [
+        [
+          26498,
+          472
+        ],
+        [
+          1284,
+          18905
+        ]
+      ],
+      "training_seconds": 4.13
+    }
+  }
+}

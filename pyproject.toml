@@ -1,0 +1,9 @@
+[project]
+name = "threatlens-ai"
+version = "1.1.0"
+description = "AI-powered phishing URL detection and threat analysis platform"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "Flask>=3.0,<4.0",
+    "psycopg[binary]>=3.2,<4.0",
+]
