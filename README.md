@@ -10,6 +10,8 @@ AI-Powered Phishing URL Detection & Threat Analysis Platform using Machine Learn
 
 Scan a URL and receive an AI-powered **SAFE** or **PHISHING** verdict with risk score, model confidence, URL features, security analytics, and incident monitoring.
 
+The dashboard opens first. Use the **Sign in** button in the header to open the protected workspace sign-in flow.
+
 ## 👥 User Roles & Access Control
 
 ThreatLens uses administrator-controlled user provisioning rather than open registration. This prevents unauthorized users from creating accounts and provides role-based access for administrators and security analysts.

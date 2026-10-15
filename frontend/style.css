@@ -37,3 +37,21 @@
 
 /* First-run setup layout: keep all fields and actions inside the authentication card. */
 .setup-panel{max-width:100%;padding-bottom:8px}.auth-setup-form input{height:44px}.setup-panel .primary,.setup-panel .secondary{min-height:44px}.setup-note{max-width:390px;margin-left:auto;margin-right:auto}
+
+/* The dashboard is the public landing view; authentication is an optional modal. */
+.auth-modal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(15,23,42,.42);backdrop-filter:blur(5px);min-height:100vh}
+.auth-modal .auth-left{display:none}
+.auth-modal .auth-right{position:relative;width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto;display:block;padding:42px 40px 34px;background:#fff;border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 24px 80px rgba(16,24,40,.28)}
+.auth-modal .auth-card{width:100%;max-height:none;padding:0}
+.auth-modal .auth-card h2{margin-top:28px}
+.auth-modal .auth-right-foot{display:none}
+.auth-modal .language{right:24px;top:20px;font-size:10px}
+.auth-modal-close{position:absolute;right:18px;top:16px;border:0;background:#f2f4f7;color:#475467;width:32px;height:32px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer}
+.auth-modal-close:hover{background:#e4e7ec}
+.signin-icon{color:#245dcc!important;background:#eef4ff!important;border-radius:8px!important;min-width:82px;height:32px;padding:0 10px!important;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:800}
+.signin-icon span{font-size:10px;font-weight:800}
+.auth-open{overflow:hidden}
+.guest-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:25px;text-align:center;color:#667085;font-size:11px}
+.guest-state b{font-size:12px;color:#344054}
+.guest-state .secondary{margin-top:8px}
+@media(max-width:750px){.auth-modal{padding:12px}.auth-modal .auth-right{max-height:calc(100vh - 24px);padding:36px 24px 24px}.auth-modal .language{display:none}}

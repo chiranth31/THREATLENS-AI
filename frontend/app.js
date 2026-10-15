@@ -3,14 +3,15 @@ let metrics={};
 let csrfToken=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg,type=''){const t=document.createElement('div');t.className='toast-item '+type;t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>t.remove(),3200)}
-function setAuth(show){$('#loginView').classList.toggle('hidden',!show);$('#appView').classList.toggle('hidden',show)}
+function setAuth(open){$('#loginView').classList.toggle('hidden',!open);$('#appView').classList.remove('hidden');$('#signInBtn').classList.toggle('hidden',!!window.currentUser);$('#profile').classList.toggle('hidden',!window.currentUser);document.body.classList.toggle('auth-open',open)}
 async function ensureCsrf(){if(csrfToken)return csrfToken;const r=await fetch('/api/csrf');const d=await r.json();csrfToken=d.token;return csrfToken}
 async function api(url,opt={}){opt={...opt};const method=(opt.method||'GET').toUpperCase();const headers={'Content-Type':'application/json',...(opt.headers||{})};if(method!=='GET'&&method!=='HEAD'){headers['X-CSRF-Token']=await ensureCsrf()}opt.headers=headers;const r=await fetch(url,opt);let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||`Request failed (${r.status})`);return d}
 async function checkAuth(){
+  setAuth(false);
   try{
     await ensureCsrf();
     const status = window.__threatLensBootstrapState || await api('/api/auth/status');
-    setAuth(true);
+    window.__threatLensSetupAvailable=!!status?.setup_available;
     // Bootstrap state is authoritative: do not call /me first on a fresh workspace.
     // This also prevents a stale session/API error from hiding the first-run setup.
     if(status && status.setup_available === true){
@@ -21,34 +22,42 @@ async function checkAuth(){
     if(d.authenticated){
       setAuth(false); fillUser(d.user); await loadAll(); initialRoute();
     }else{
-      showLoginMode();
+      showLoginMode({open:false}); showGuestState(); initialRoute();
     }
   }catch(err){
-    setAuth(true);
-    // Keep the normal sign-in screen only when the status endpoint cannot be read.
-    showLoginMode();
+    // The dashboard is still the landing view when auth status is unavailable.
+    // Private workspace data will remain unavailable until the user signs in.
+    showLoginMode({open:false}); showGuestState(); initialRoute();
   }
 }
-function fillUser(u){window.currentUser=u;$('#profileName').textContent=u.name;$('#profileRole').textContent=u.role;$('#helloName').textContent=u.name.split(' ')[0];$('#avatar').textContent=u.name.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();$$('[data-page=users],[data-page=security]').forEach(el=>el.style.display=u.role==='Administrator'?'flex':'none')}
+function fillUser(u){window.currentUser=u;$('#profileName').textContent=u.name;$('#profileRole').textContent=u.role;$('#helloName').textContent=u.name.split(' ')[0];$('#avatar').textContent=u.name.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();$('#signInBtn').classList.add('hidden');$('#profile').classList.remove('hidden');$('#logout').classList.remove('hidden');$$('[data-page=users],[data-page=security]').forEach(el=>el.style.display=u.role==='Administrator'?'flex':'none')}
+function showGuestState(){window.currentUser=null;$('#signInBtn').classList.remove('hidden');$('#profile').classList.add('hidden');$('#logout').classList.add('hidden');$('#helloName').textContent='your team';$('#mThreats').textContent='—';$('#mScans').textContent='—';$('#mAccuracy').textContent='—';$('#mIncidents').textContent='—';$('#mModel').textContent='Sign in to view workspace metrics';$('#sideModel').textContent='Sign in required';$('#postModel').textContent='Sign in to view readiness';$('#postDataset').textContent='UCI PhiUSIIL';$('#incidentCount').textContent='—';$('#activityChart').innerHTML='<div class="guest-state"><b>Workspace activity is private</b><span>Sign in to load scan activity and incident history.</span></div>';$('#recentIncidents').innerHTML='<div class="guest-state"><b>Sign in to view recent incidents</b><span>Your dashboard data stays protected by the existing session controls.</span><button class="secondary" id="guestSignIn">Sign in</button></div>';$('#guestSignIn').onclick=()=>openAuth()}
 $('#togglePassword').onclick=()=>{const x=$('#loginPassword');x.type=x.type==='password'?'text':'password'};
 const DEMO_ACCOUNTS={admin:{email:'admin@threatlens.ai',password:'ThreatLens!2026_Admin'},analyst:{email:'analyst@threatlens.ai',password:'ThreatLens!2026_Analyst'}};
 $$('[data-demo]').forEach(b=>b.onclick=()=>{const a=DEMO_ACCOUNTS[b.dataset.demo];$('#loginEmail').value=a.email;$('#loginPassword').value=a.password;$('#loginError').textContent='';$('#loginEmail').focus();toast(`${b.dataset.demo==='admin'?'Administrator':'Analyst'} demo credentials loaded`,'good')});
 $('#forgot').onclick=e=>{e.preventDefault();openModal(`<div class="modal-kicker">ACCOUNT RECOVERY</div><h2>Forgot password?</h2><p class="modal-subtitle">For this local SOC prototype, password recovery is handled by an administrator rather than by exposing a reset link.</p><div class="account-status"><span class="dot blue"></span><div><b>Administrator recovery</b><small>Ask an administrator to unlock the account or issue a temporary password. The action is recorded in the security audit trail.</small></div></div><div class="modal-actions"><button class="primary" id="forgotClose">Close</button></div>`);$('#forgotClose').onclick=closeModal};
-function showLoginMode(){
+function showLoginMode({open=true}={}){
+  document.documentElement.classList.remove('first-run'); window.__threatLensSetupAvailable=false;
   $('#authTitle').textContent='Sign in'; $('#authSubtitle').textContent='Access your security operations workspace.';
   $('#loginForm').classList.remove('hidden'); $('#setupPanel').classList.add('hidden'); $('#loginExtras').classList.remove('hidden');
+  if(open)setAuth(true);
 }
 function showSetupMode(){
+  window.__threatLensSetupAvailable=true;
   $('#authTitle').textContent='Set up your workspace'; $('#authSubtitle').textContent='Create the first administrator for this ThreatLens security workspace.';
   $('#loginForm').classList.add('hidden'); $('#setupPanel').classList.remove('hidden'); $('#loginExtras').classList.add('hidden');
+  setAuth(true);
 }
+function openAuth(){if(window.__threatLensSetupAvailable)showSetupMode();else showLoginMode({open:true})}
+$('#closeAuthBtn').onclick=()=>setAuth(false);$('#signInBtn').onclick=()=>openAuth();
 $('#setupForm').onsubmit=async e=>{e.preventDefault();$('#setupError').textContent='';if($('#setupPassword').value!==$('#setupConfirm').value){$('#setupError').textContent='Passwords do not match.';return}try{const d=await api('/api/auth/initialize',{method:'POST',body:JSON.stringify({name:$('#setupName').value,email:$('#setupEmail').value,password:$('#setupPassword').value})});csrfToken=d.csrf||csrfToken;fillUser(d.user);setAuth(false);await loadAll();toast('Security workspace initialized','good')}catch(err){$('#setupError').textContent=err.message}};
-$('#loadDemoBtn').onclick=async()=>{if(!confirm('Load the documented hackathon Administrator and Analyst demo accounts? This is available only on a fresh workspace.'))return;try{await api('/api/auth/load-demo',{method:'POST'});showLoginMode();toast('Hackathon demo accounts loaded','good')}catch(err){$('#setupError').textContent=err.message}};
-$('#loginForm').onsubmit=async e=>{e.preventDefault();$('#loginError').textContent='';try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email:$('#loginEmail').value,password:$('#loginPassword').value})});csrfToken=d.csrf||csrfToken;fillUser(d.user);setAuth(false);await loadAll()}catch(err){$('#loginError').textContent=err.message}};
-$('#logout').onclick=async()=>{await api('/api/auth/logout',{method:'POST'});setAuth(true);toast('Signed out','good')};
+$('#loadDemoBtn').onclick=async()=>{if(!confirm('Load the documented hackathon Administrator and Analyst demo accounts? This is available only on a fresh workspace.'))return;try{await api('/api/auth/load-demo',{method:'POST'});showLoginMode({open:true});toast('Hackathon demo accounts loaded','good')}catch(err){$('#setupError').textContent=err.message}};
+$('#loginForm').onsubmit=async e=>{e.preventDefault();$('#loginError').textContent='';try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email:$('#loginEmail').value,password:$('#loginPassword').value})});csrfToken=d.csrf||csrfToken;fillUser(d.user);setAuth(false);await loadAll();initialRoute()}catch(err){$('#loginError').textContent=err.message}};
+$('#logout').onclick=async()=>{await api('/api/auth/logout',{method:'POST'});showGuestState();setAuth(false);navigate('home');toast('Signed out','good')};
 function navigate(page){
   const target=document.getElementById('page-'+page);
   if(!target)return;
+  if(page!=='home'&&!window.currentUser){openAuth();toast('Sign in to use analyst tools');return;}
   // Make navigation deterministic: hide every page, then show exactly one.
   $$('.page').forEach(section=>{
     section.classList.toggle('active',section===target);
@@ -61,7 +70,7 @@ function navigate(page){
   if(page==='users')loadUsers();
   if(page==='security')loadSecurityAudit();
   if(page==='analytics')renderAnalytics();
-  if(page==='home')loadDashboard();
+  if(page==='home'&&window.currentUser)loadDashboard();
   if(page==='settings')loadSettings();
 }
 // Use document-level delegation so every navigation item works, including the
@@ -75,7 +84,7 @@ document.addEventListener('click',e=>{
 function initialRoute(){
   const requested=location.hash.replace('#','');
   const allowed=['home','incidents','scanner','intel','analytics','history','users','security','settings'];
-  navigate(allowed.includes(requested)?requested:'home');
+  navigate(window.currentUser&&allowed.includes(requested)?requested:'home');
 }
 async function loadAll(){try{metrics=await api('/api/metrics');const h=await api('/api/health');$('#sideModel').textContent=h.trained?'Model bundle ready':'Model bundle missing';$('#postModel').textContent=h.trained?'Exported ML bundle':'Run Colab export';$('#scannerModel').textContent=metrics.best_model||'Random Forest';renderAnalytics();await loadDashboard()}catch(e){toast(e.message,'bad')}}
 async function loadDashboard(){try{const d=await api('/api/dashboard');const ds=d.dataset||{};$('#mThreats').textContent=d.scan_stats.phishing;$('#mScans').textContent=d.scan_stats.total;$('#mIncidents').textContent=d.scan_stats.open_incidents;const bm=d.best_model||'—', ba=(d.models?.[bm]?.accuracy);$('#mAccuracy').textContent=ba!=null?ba+'%':'—';$('#mModel').textContent=bm;$('#incidentCount').textContent=d.scan_stats.open_incidents;$('#postDataset').textContent=ds.instances?Number(ds.instances).toLocaleString()+' URLs':'UCI PhiUSIIL';renderChart(d.recent||[]);renderRecent(d.recent||[])}catch(e){toast(e.message,'bad')}}
@@ -103,11 +112,11 @@ function openProfile(){const u=window.currentUser||{};openModal(`<div class="mod
 function openAccount(){const u=window.currentUser||{};openModal(`<div class="modal-kicker">ACCOUNT</div><h2>Account security</h2><p class="modal-subtitle">Local prototype account controls.</p><div class="account-status"><span class="dot green"></span><div><b>Session protected</b><small>Authenticated through the local Flask session.</small></div></div><div class="account-status"><span class="dot green"></span><div><b>${esc(u.role||'Analyst')} role</b><small>${esc(u.email||'')}</small></div></div><div class="modal-actions"><button class="secondary" id="changePasswordBtn">Change password</button><button class="secondary" id="accountSettingsBtn">Open settings</button><button class="primary" id="accountCloseBtn">Close</button></div>`);$('#accountCloseBtn').onclick=closeModal;$('#changePasswordBtn').onclick=()=>{closeModal();openChangePassword()};$('#accountSettingsBtn').onclick=()=>{closeModal();navigate('settings')}}
 function loadSettings(){const d=JSON.parse(localStorage.getItem('threatlensSettings')||'{}');if(d.workspaceName)$('#workspaceName').value=d.workspaceName;if(d.workspaceEnv)$('#workspaceEnv').value=d.workspaceEnv;if(d.timezone)$('#timezone').value=d.timezone;if(typeof d.notifications==='boolean')$('#notifyToggle').checked=d.notifications;if(typeof d.compact==='boolean')$('#compactToggle').checked=d.compact;$('#authToggle').checked=true;document.body.classList.toggle('compact-mode',!!d.compact)}
 $('#saveSettingsBtn').onclick=()=>{const d={workspaceName:$('#workspaceName').value.trim()||'ThreatLens Security Operations Center',workspaceEnv:$('#workspaceEnv').value.trim()||'Local Hackathon Prototype',timezone:$('#timezone').value,notifications:$('#notifyToggle').checked,compact:$('#compactToggle').checked};localStorage.setItem('threatlensSettings',JSON.stringify(d));document.body.classList.toggle('compact-mode',d.compact);$('.tenant b').textContent=d.workspaceName.replace(' Security Operations Center','')||'Security Workspace';toast('Settings saved successfully','good')};
-$('#addUserBtn').onclick=()=>openModal(`<div class="modal-kicker">IDENTITY & ACCESS</div><h2>Add workspace user</h2><p class="modal-subtitle">Create a local analyst or administrator account.</p><form id="addUserForm" class="modal-form"><label>Full name<input id="newUserName" required placeholder="Security Analyst"></label><label>Email<input id="newUserEmail" type="email" required placeholder="analyst@example.com"></label><label>Temporary password<input id="newUserPassword" type="password" minlength="12" required placeholder="Minimum 12 characters"></label><label>Role<select id="newUserRole"><option>Analyst</option><option>Administrator</option></select></label><div class="auth-error" id="addUserError"></div><div class="modal-actions"><button type="button" class="secondary" id="cancelAddUser">Cancel</button><button type="submit" class="primary">Create user</button></div></form>`);$('#cancelAddUser').onclick=closeModal;$('#addUserForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/users',{method:'POST',body:JSON.stringify({name:$('#newUserName').value,email:$('#newUserEmail').value,password:$('#newUserPassword').value,role:$('#newUserRole').value})});closeModal();await loadUsers();toast('User created successfully','good')}catch(err){$('#addUserError').textContent=err.message}};
+$('#addUserBtn').onclick=()=>{openModal(`<div class="modal-kicker">IDENTITY & ACCESS</div><h2>Add workspace user</h2><p class="modal-subtitle">Create a local analyst or administrator account.</p><form id="addUserForm" class="modal-form"><label>Full name<input id="newUserName" required placeholder="Security Analyst"></label><label>Email<input id="newUserEmail" type="email" required placeholder="analyst@example.com"></label><label>Temporary password<input id="newUserPassword" type="password" minlength="12" required placeholder="Minimum 12 characters"></label><label>Role<select id="newUserRole"><option>Analyst</option><option>Administrator</option></select></label><div class="auth-error" id="addUserError"></div><div class="modal-actions"><button type="button" class="secondary" id="cancelAddUser">Cancel</button><button type="submit" class="primary">Create user</button></div></form>`);$('#cancelAddUser').onclick=closeModal;$('#addUserForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/users',{method:'POST',body:JSON.stringify({name:$('#newUserName').value,email:$('#newUserEmail').value,password:$('#newUserPassword').value,role:$('#newUserRole').value})});closeModal();await loadUsers();toast('User created successfully','good')}catch(err){$('#addUserError').textContent=err.message}}};
 $('#profile').onclick=e=>{if(e.target.closest('.profile-menu button'))return;$('#profileMenu').classList.toggle('hidden')};document.addEventListener('click',e=>{if(!e.target.closest('#profile'))$('#profileMenu')?.classList.add('hidden')});
 document.addEventListener('click',async e=>{const a=e.target.closest('[data-profile-action]');if(!a)return;$('#profileMenu').classList.add('hidden');const action=a.dataset.profileAction;if(action==='profile')openProfile();if(action==='account')openAccount();if(action==='settings')navigate('settings');if(action==='logout'){$('#logout').click()}});
 $('#notificationBtn').onclick=e=>{$('#notificationPanel').classList.toggle('hidden');$('#profileMenu').classList.add('hidden');$('#notificationBadge').textContent='0'};$('#clearNotifications').onclick=()=>{$('#notificationList').innerHTML='<div class="empty">No unread notifications.</div>';$('#notificationBadge').textContent='0'};
-$('#helpBtn').onclick=()=>openModal(`<div class="modal-kicker">THREATLENS HELP</div><h2>Security Center help</h2><p class="modal-subtitle">Quick guide for the hackathon demonstration.</p><div class="help-list"><div><b>URL Scanner</b><span>Analyze a URL with the deployed Random Forest model.</span></div><div><b>Incidents & Alerts</b><span>Review phishing detections generated by scans.</span></div><div><b>ML Analytics</b><span>Compare the three trained models and confusion matrices.</span></div><div><b>Settings</b><span>Save workspace and analyst display preferences.</span></div></div><div class="modal-actions"><button class="primary" id="helpClose">Close</button></div>`);$('#helpClose').onclick=closeModal;
+$('#helpBtn').onclick=()=>{openModal(`<div class="modal-kicker">THREATLENS HELP</div><h2>Security Center help</h2><p class="modal-subtitle">Quick guide for the hackathon demonstration.</p><div class="help-list"><div><b>URL Scanner</b><span>Analyze a URL with the deployed Random Forest model.</span></div><div><b>Incidents & Alerts</b><span>Review phishing detections generated by scans.</span></div><div><b>ML Analytics</b><span>Compare the three trained models and confusion matrices.</span></div><div><b>Settings</b><span>Save workspace and analyst display preferences.</span></div></div><div class="modal-actions"><button class="primary" id="helpClose">Close</button></div>`);$('#helpClose').onclick=closeModal};
 $('#globalSearch').oninput=e=>{const q=e.target.value.toLowerCase();if(q.length<3)return;const hit=(metrics?.models&&Object.keys(metrics.models).find(x=>x.toLowerCase().includes(q)));if(hit)navigate('analytics')};
 setInterval(()=>{const d=new Date();const el=$('#clock');if(el)el.textContent=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 checkAuth();
